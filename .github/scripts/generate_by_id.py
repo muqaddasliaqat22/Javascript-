@@ -1,32 +1,24 @@
-import os
-import requests
-from github import Github
-
-# Get the info from GitHub's environment
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
-TICKET_ID = os.getenv('TICKET_ID')
-REPO_NAME = os.getenv('GITHUB_REPOSITORY')
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-
 def get_ai_response(title, body):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     
-    prompt = f"Act as a QA Engineer. Write test cases for this ticket:\nTitle: {title}\nDescription: {body}"
+    # NEW SHORT PROMPT
+    prompt = f"""
+    Act as a Senior QA Engineer. Based on the ticket below, provide ONLY a bulleted list of 
+    Test Scenarios. 
+    - Do NOT include 'Steps to Reproduce'.
+    - Do NOT include 'Expected Results' or 'Preconditions'.
+    - Just list the high-level scenario titles (Positive, Negative, and Edge cases).
+
+    TICKET TITLE: {title}
+    TICKET DESCRIPTION: {body}
+    """
     
     data = {
         "model": "llama-3.1-8b-instant",
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.5 # Lower temperature makes the AI more focused
     }
     
     response = requests.post(url, json=data, headers=headers)
     return response.json()['choices'][0]['message']['content']
-
-# Initialize GitHub connection
-g = Github(GITHUB_TOKEN)
-repo = g.get_repo(REPO_NAME)
-issue = repo.get_issue(number=int(TICKET_ID))
-
-# Generate and post
-test_cases = get_ai_response(issue.title, issue.body)
-issue.create_comment(f"### 🤖 Automated Test Cases\n\n{test_cases}")
