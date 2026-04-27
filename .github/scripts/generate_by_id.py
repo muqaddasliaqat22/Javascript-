@@ -2,16 +2,18 @@ def get_ai_response(title, body):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     
-    # This prompt is strictly designed for high-level scenarios only
+    # This prompt forces the AI to stop after the first 3 lines
     prompt = f"""
-    Act as a Senior QA Engineer. Read the GitHub ticket below and provide ONLY a high-level list of Test Scenarios.
+    Act as a Senior QA Engineer. Based on the ticket below, generate ONLY the following three fields and NOTHING ELSE:
+    1. Test Case ID (Format: TC-[KEYWORD]-[NUMBER])
+    2. Component (The main part of the app mentioned)
+    3. Description (A one-sentence summary of the test objective)
 
     STRICT RULES:
-    1. DO NOT include Test Case IDs (like TC-LGN-001).
-    2. DO NOT include Steps, Expected Results, or Preconditions.
-    3. DO NOT include Environment, Objectives, or Conclusions.
-    4. Provide ONLY the scenario titles in a simple bulleted list.
-    5. Group them briefly by Positive, Negative, and Edge Cases.
+    - DO NOT include Preconditions.
+    - DO NOT include Steps.
+    - DO NOT include Expected Results.
+    - DO NOT include any other text or summary.
 
     TICKET TITLE: {title}
     TICKET DESCRIPTION: {body}
@@ -20,7 +22,7 @@ def get_ai_response(title, body):
     data = {
         "model": "llama-3.1-8b-instant",
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.2  # Very low temperature makes the AI follow instructions strictly
+        "temperature": 0.1  # Set very low for maximum strictness
     }
     
     response = requests.post(url, json=data, headers=headers)
