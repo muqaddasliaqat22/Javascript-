@@ -12,11 +12,13 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      # Update from v4 to v5 (or latest available) to use newer Node versions
+      - uses: actions/checkout@v4 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 
         with:
-          python-version: '3.9'
+          python-version: '3.12' # Using a newer Python version is also better
+
       - run: pip install PyGithub requests
       - name: Run Script
         env:
