@@ -1,25 +1,19 @@
-import os
-import requests
-from github import Github
-
-GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
-TICKET_ID = os.getenv('TICKET_ID')
-REPO_NAME = os.getenv('GITHUB_REPOSITORY')
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-
 def get_ai_response(title, body):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     
+    # This prompt forces the AI to find different case types but keep the format short
     prompt = f"""
-    Act as a Senior QA Engineer. Based on the ticket below, write ONLY the Test Case ID and Description.
+    Act as a Senior QA Engineer. Analyze the ticket below and generate test cases.
     
+    FOR EACH CASE (Positive, Negative, and Edge Cases), provide ONLY:
+    1. Test Case ID (Format: TC-00X - [Short Title])
+    2. Test Case Description (A brief summary of the objective)
+
     STRICT RULES:
-    1. Output ONLY 'Test Case ID' and 'Test Case Description'.
-    2. SKIP Steps, Expected Results, Preconditions, and all other info.
-    3. Format: 
-       Test Case ID: TC-00X - [Title]
-       Test Case Description: [One sentence description]
+    - SKIP Steps, Expected Results, and Preconditions.
+    - Group them clearly under headers: ### Positive Cases, ### Negative Cases, and ### Edge Cases.
+    - Ensure at least 2 scenarios for each category if the ticket scope allows.
 
     TICKET TITLE: {title}
     TICKET DESCRIPTION: {body}
@@ -28,15 +22,8 @@ def get_ai_response(title, body):
     data = {
         "model": "llama-3.1-8b-instant",
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.1
+        "temperature": 0.2
     }
     
     response = requests.post(url, json=data, headers=headers)
     return response.json()['choices'][0]['message']['content']
-
-g = Github(GITHUB_TOKEN)
-repo = g.get_repo(REPO_NAME)
-issue = repo.get_issue(number=int(TICKET_ID))
-
-test_cases = get_ai_response(issue.title, issue.body)
-issue.create_comment(f"### 🤖 Automated Test Cases\n\n{test_cases}")
