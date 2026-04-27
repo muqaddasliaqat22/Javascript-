@@ -2,18 +2,16 @@ def get_ai_response(title, body):
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
     
-    # This prompt forces the AI to stop after the first 3 lines
+    # This prompt tells the AI to provide ONLY the list of check-style scenarios
     prompt = f"""
-    Act as a Senior QA Engineer. Based on the ticket below, generate ONLY the following three fields and NOTHING ELSE:
-    1. Test Case ID (Format: TC-[KEYWORD]-[NUMBER])
-    2. Component (The main part of the app mentioned)
-    3. Description (A one-sentence summary of the test objective)
-
+    Act as a Senior QA Engineer. Based on the ticket below, write a simple list of test scenarios.
+    
     STRICT RULES:
-    - DO NOT include Preconditions.
-    - DO NOT include Steps.
-    - DO NOT include Expected Results.
-    - DO NOT include any other text or summary.
+    1. Start every line with "Check " followed by the scenario.
+    2. Provide ONLY the list of scenarios. 
+    3. DO NOT include "Test Case ID", "Component", "Steps", or "Expected Results".
+    4. DO NOT include any introductory or concluding text.
+    5. Include scenarios for responsiveness and cross-browser testing at the end.
 
     TICKET TITLE: {title}
     TICKET DESCRIPTION: {body}
@@ -22,7 +20,7 @@ def get_ai_response(title, body):
     data = {
         "model": "llama-3.1-8b-instant",
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.1  # Set very low for maximum strictness
+        "temperature": 0.1  # Low temperature ensures it sticks to the format
     }
     
     response = requests.post(url, json=data, headers=headers)
